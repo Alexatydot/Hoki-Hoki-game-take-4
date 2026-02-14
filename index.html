@@ -1,0 +1,192 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="UTF-8">
+<title>Hoki Hoki IF</title>
+<style>
+body {
+    background: #050505;
+    color: #00ff88;
+    font-family: 'Courier New', monospace;
+    margin: 0;
+    padding: 0;
+}
+#game-container {
+    width: 80%;
+    margin: 50px auto;
+}
+#background {
+    width: 100%;
+    height: 300px;
+    background: #000;
+    margin-bottom: 20px;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    color: #00ff88;
+    font-size: 24px;
+    border: 1px solid #00ff88;
+}
+#dialogue { margin-bottom: 20px; }
+.choice-btn {
+    display: block;
+    background: black;
+    border: 1px solid #00ff88;
+    color: #00ff88;
+    padding: 10px;
+    margin: 5px 0;
+    cursor: pointer;
+    width: 100%;
+    text-align: left;
+}
+.choice-btn:hover {
+    background: #00ff88;
+    color: black;
+}
+.glitch {
+    animation: glitch 0.5s infinite;
+}
+@keyframes glitch {
+    0% { text-shadow: 2px 0 red; }
+    50% { text-shadow: -2px 0 blue; }
+    100% { text-shadow: 2px 0 red; }
+}
+</style>
+</head>
+<body>
+<div id="game-container">
+    <div id="background">Scene Background</div>
+    <div id="dialogue"></div>
+    <div id="choices"></div>
+</div>
+
+<script>
+// STORY DATA
+const storyData = {
+
+  variables: {
+    Trust_Enaki: 0,
+    Trust_Tonni: 0,
+    Corruption: 0,
+    foundElepathyClue: false,
+    secretLab: false,
+    secretEnding: false
+  },
+
+  scenes: [
+    {
+      id: "prologue",
+      background: "G.P.O. HQ",
+      dialogue: [
+        { speaker: "Enaki", text: "Welcome to the G.P.O. recruit program. We don’t have time for mistakes. Are you ready?" },
+        { speaker: "Kitana", text: "Keep up. Some of us don’t get second chances." },
+        { speaker: "Tonni", text: "Don’t worry, I’ll have your back… probably." }
+      ],
+      choices: [
+        { text: "Observe quietly", effects: { Trust_Enaki: 5 }, next: "chapter1" },
+        { text: "Talk to everyone", effects: { Trust_Tonni: 5, Corruption: 1 }, next: "chapter1" }
+      ]
+    },
+    {
+      id: "chapter1",
+      background: "Abandoned Alley",
+      dialogue: [{ speaker: "Narrator", text: "You arrive at the reported ghoul activity area. Shadows shift in the alley." }],
+      choices: [
+        { text: "Fight the ghoul", effects: { Trust_Enaki: 5, Corruption: 2 }, next: "chapter2" },
+        { text: "Run and call for backup", effects: { Trust_Enaki: -2 }, next: "chapter2" },
+        { text: "Set a trap and observe", effects: { Trust_Tonni: 3, Corruption: 1, foundElepathyClue: true }, next: "chapter2" }
+      ]
+    },
+    {
+      id: "chapter2",
+      background: "Monitoring Room",
+      dialogue: [
+        { speaker: "Enaki", text: "What is this signal? It’s… off the charts." },
+        { speaker: "Tonni", text: "Should we report it?" },
+        { speaker: "Kitana", text: "Do what you think is right, but fast." }
+      ],
+      choices: [
+        { text: "Report immediately", effects: { Trust_Enaki: 5 }, next: "chapter3" },
+        { text: "Investigate secretly", effects: { Trust_Tonni: 2, Corruption: 2, secretLab: true }, next: "chapter3" }
+      ]
+    },
+    {
+      id: "chapter3",
+      background: "G.P.O. Corridor",
+      dialogue: [
+        { speaker: "Yosebi", text: "Do you… feel it too? The… pull?" },
+        { speaker: "Enaki", text: "Stay alert. This isn’t normal." }
+      ],
+      choices: [
+        { text: "Confront Yosebi", effects: { Trust_Enaki: 3, Corruption: 3 }, next: "chapter4" },
+        { text: "Avoid and observe", effects: { Trust_Tonni: 2, Corruption: 1 }, next: "chapter4" },
+        { text: "Follow Yosebi secretly", effects: { Corruption: 5, secretLab: true }, next: "chapter4" }
+      ]
+    },
+    {
+      id: "chapter4",
+      background: "Rooftop Final",
+      dialogue: [{ speaker: "Narrator", text: "The final encounter with a corrupted ghoul entity begins under the full moon." }],
+      choices: [
+        { text: "Fight bravely", effects: { Trust_Enaki: 5, Corruption: 5 }, next: "ending" },
+        { text: "Sacrifice self to save teammates", effects: {}, next: "ending" },
+        { text: "Use Elepathy knowledge", effects: { secretEnding: true }, next: "ending" }
+      ]
+    },
+    {
+      id: "ending",
+      background: "Ending Scene",
+      dialogue: [{ speaker: "Narrator", text: "The outcome of your mission is revealed based on your choices and variables." }],
+      choices: []
+    }
+  ]
+};
+
+// CURRENT SCENE
+let currentScene = storyData.scenes[0];
+
+// RENDER FUNCTION
+function renderScene(scene) {
+  // Background
+  document.getElementById("background").textContent = scene.background;
+
+  // Dialogue
+  const dialogueDiv = document.getElementById("dialogue");
+  dialogueDiv.innerHTML = "";
+  scene.dialogue.forEach(line => {
+    const p = document.createElement("p");
+    p.innerHTML = `<strong>${line.speaker}:</strong> ${line.text}`;
+    // Glitch effect if corruption > 7
+    if (storyData.variables.Corruption >= 7) p.classList.add("glitch");
+    dialogueDiv.appendChild(p);
+  });
+
+  // Choices
+  const choicesDiv = document.getElementById("choices");
+  choicesDiv.innerHTML = "";
+  scene.choices.forEach(choice => {
+    const btn = document.createElement("button");
+    btn.textContent = choice.text;
+    btn.className = "choice-btn";
+    btn.onclick = () => {
+      // Apply effects
+      for (const [key, value] of Object.entries(choice.effects)) {
+        if (typeof storyData.variables[key] === "boolean") storyData.variables[key] = value;
+        else storyData.variables[key] += value;
+      }
+      // Move to next scene
+      const nextScene = storyData.scenes.find(s => s.id === choice.next);
+      if (nextScene) {
+        currentScene = nextScene;
+        renderScene(currentScene);
+      }
+    };
+    choicesDiv.appendChild(btn);
+  });
+}
+
+// INITIAL RENDER
+renderScene(currentScene);
+</script>
+</body>
+</html>
